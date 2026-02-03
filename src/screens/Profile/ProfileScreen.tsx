@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, useWindowDimensions } from 'react-native';
 import { Text, Card, Button, Avatar, Chip, Divider, Surface } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
@@ -6,15 +6,33 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const ProfileScreen = () => {
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, signOut, loading: authLoading } = useAuth();
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
+  useEffect(() => {
+    // If auth is done loading and profile is still null, user was deleted
+    if (!authLoading && !profile) {
+      console.log('Profile not found - user may have been deleted');
+      signOut();
+    }
+  }, [authLoading, profile, signOut]);
+
+  // Show loading only during initial auth check
+  if (authLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text>Loading profile...</Text>
+      </View>
+    );
+  }
+
+  // If no profile after loading, show error briefly before signOut redirects
   if (!profile) {
     return (
-      <View style={styles.container}>
-        <Text>Loading profile...</Text>
+      <View style={[styles.container, styles.centered]}>
+        <Text>Profile not found. Redirecting...</Text>
       </View>
     );
   }
@@ -162,6 +180,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabletContent: {
     padding: 24,
