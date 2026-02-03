@@ -60,6 +60,17 @@ export const profileApi = {
     return data;
   },
 
+  checkPhoneExists: async (phone: string): Promise<boolean> => {
+    const { data, error } = await supabase
+      .rpc('check_phone_exists', { phone_number: phone });
+    
+    if (error) {
+      console.error('Phone check error:', error);
+      return false;
+    }
+    return data || false;
+  },
+
   createProfile: async (profile: Partial<MemberProfile>) => {
     const { data, error } = await supabase
       .from('profiles')
@@ -94,15 +105,14 @@ export const profileApi = {
   },
 
   uploadPhoto: async (userId: string, base64Image: string) => {
-    // Use a fixed filename so it overwrites the previous one
     const fileName = `${userId}/profile.jpg`;
     const timestamp = Date.now();
     
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('profile-photos')
       .upload(fileName, decode(base64Image), {
         contentType: 'image/jpeg',
-        upsert: true, // This forces overwrite!
+        upsert: true,
       });
     
     if (error) throw error;
@@ -111,10 +121,8 @@ export const profileApi = {
       .from('profile-photos')
       .getPublicUrl(fileName);
     
-    // Add timestamp to URL to force UI to refresh the image
     return `${publicUrl}?t=${timestamp}`;
   },
 };
 
-// Helper to decode base64
 import { decode } from 'base64-arraybuffer';

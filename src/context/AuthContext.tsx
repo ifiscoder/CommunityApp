@@ -50,24 +50,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, profileData: Partial<MemberProfile>) => {
-    const { user: authUser } = await authApi.signUp(email, password);
-    if (authUser) {
+    // Step 1: Check phone constraints (Supabase Auth handles Email, we must handle Phone)
+    if (profileData.phone) {
+      const phoneExists = await profileApi.checkPhoneExists(profileData.phone);
+      if (phoneExists) {
+        throw new Error('This phone number is already registered. Please use a different phone number.');
+      }
+    }
+
+    // Step 2: Create auth user
+    let authUserId: string | null = null;
+    try {
+      const result = await authApi.signUp(email, password);
+      if (!result.user) {
+        throw new Error('Failed to create user account');
+      }
+      authUserId = result.user.id;
+    } catch (error: any) {
+      // Auth error (e.g., email already exists)
+      throw new Error(error.message || 'Failed to create user account');
+    }
+
+    // Step 3: Create profile
+    try {
       const newProfile = await profileApi.createProfile({
-        id: authUser.id,
+        id: authUserId,
         email,
         role: 'member',
         is_verified: false,
         is_approved: false,
         ...profileData,
       });
-      
+
       const userData: User = {
-        id: authUser.id,
-        email: authUser.email!,
+        id: authUserId,
+        email,
         role: 'member',
       };
       setUser(userData);
       setProfile(newProfile);
+    } catch (profileError: any) {
+      // Profile creation failed - show specific error
+      const errorMessage = profileError.message || '';
+      
+      if (errorMessage.includes('profiles_phone_key') || 
+          errorMessage.includes('duplicate key')) {
+        throw new Error('This phone number is already registered. Please use a different phone number.');
+      }
+      
+      throw new Error(profileError.message || 'Failed to create profile');
     }
   };
 

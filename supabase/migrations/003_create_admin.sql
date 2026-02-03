@@ -29,7 +29,7 @@ SELECT
   true,
   false
 FROM auth.users 
-WHERE email = 'admin@community.local'
+WHERE email = 'test@gmail.com'
 ON CONFLICT (id) DO UPDATE SET
   role = 'admin',
   is_verified = true,
@@ -38,4 +38,4 @@ ON CONFLICT (id) DO UPDATE SET
 -- Verify admin was created
 SELECT email, role, is_verified, is_approved 
 FROM public.profiles 
-WHERE email = 'admin@community.local';
+WHERE email = 'test@gmail.com';
