@@ -1,0 +1,26 @@
+export const theme = {
+  colors: {
+    primary: '#2563eb',
+    primaryContainer: '#dbeafe',
+    secondary: '#64748b',
+    secondaryContainer: '#f1f5f9',
+    surface: '#ffffff',
+    background: '#f8fafc',
+    error: '#dc2626',
+    errorContainer: '#fee2e2',
+    onPrimary: '#ffffff',
+    onSurface: '#1e293b',
+    onSurfaceVariant: '#64748b',
+    outline: '#cbd5e1',
+    outlineVariant: '#e2e8f0',
+    elevation: {
+      level0: 'transparent',
+      level1: '#ffffff',
+      level2: '#f8fafc',
+      level3: '#f1f5f9',
+      level4: '#e2e8f0',
+      level5: '#cbd5e1',
+    },
+  },
+  roundness: 8,
+};
