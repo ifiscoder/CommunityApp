@@ -17,15 +17,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const session = await authApi.getSession();
       if (session?.user) {
+        // Source of Truth: Database Profile
+        const profileData = await profileApi.getProfile(session.user.id);
+        setProfile(profileData);
+
         const userData: User = {
           id: session.user.id,
           email: session.user.email!,
-          role: session.user.user_metadata?.role || 'member',
+          role: profileData?.role || 'member', // Default to member if profile missing (shouldn't happen)
         };
         setUser(userData);
-        
-        const profileData = await profileApi.getProfile(session.user.id);
-        setProfile(profileData);
       }
     } catch (error) {
       console.error('Session check error:', error);
@@ -37,15 +38,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     const { user: authUser } = await authApi.signIn(email, password);
     if (authUser) {
+      // Source of Truth: Database Profile
+      const profileData = await profileApi.getProfile(authUser.id);
+      setProfile(profileData);
+
       const userData: User = {
         id: authUser.id,
         email: authUser.email!,
-        role: authUser.user_metadata?.role || 'member',
+        role: profileData?.role || 'member',
       };
       setUser(userData);
-      
-      const profileData = await profileApi.getProfile(authUser.id);
-      setProfile(profileData);
     }
   };
 
