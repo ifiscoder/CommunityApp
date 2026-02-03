@@ -52,7 +52,7 @@ export const profileApi = {
       .select('*')
       .eq('id', userId)
       .single();
-    
+
     if (error) {
       if (error.code === 'PGRST116') return null;
       throw error;
@@ -63,7 +63,7 @@ export const profileApi = {
   checkPhoneExists: async (phone: string): Promise<boolean> => {
     const { data, error } = await supabase
       .rpc('check_phone_exists', { phone_number: phone });
-    
+
     if (error) {
       console.error('Phone check error:', error);
       return false;
@@ -77,21 +77,37 @@ export const profileApi = {
       .insert([profile])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   },
 
   updateProfile: async (userId: string, updates: Partial<MemberProfile>) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', userId)
-      .select()
-      .single();
-    
+      .eq('id', userId);
+
     if (error) throw error;
+
+    // Fetch the updated profile separately (handles RLS issues)
+    const { data, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError) throw fetchError;
     return data;
+  },
+
+  deleteProfile: async (userId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (error) throw error;
   },
 
   getAllProfiles: async (): Promise<MemberProfile[]> => {
@@ -99,7 +115,7 @@ export const profileApi = {
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data || [];
   },
@@ -107,20 +123,20 @@ export const profileApi = {
   uploadPhoto: async (userId: string, base64Image: string) => {
     const fileName = `${userId}/profile.jpg`;
     const timestamp = Date.now();
-    
+
     const { error } = await supabase.storage
       .from('profile-photos')
       .upload(fileName, decode(base64Image), {
         contentType: 'image/jpeg',
         upsert: true,
       });
-    
+
     if (error) throw error;
-    
+
     const { data: { publicUrl } } = supabase.storage
       .from('profile-photos')
       .getPublicUrl(fileName);
-    
+
     return `${publicUrl}?t=${timestamp}`;
   },
 };

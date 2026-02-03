@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, useWindowDimensions, Alert } from 'react-native';
 import { Text, Button, Avatar, Chip, Divider, Surface, ActivityIndicator, Dialog, Portal } from 'react-native-paper';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { profileApi } from '../../services/supabase';
+import { profileApi, supabase } from '../../services/supabase';
 import { MemberProfile } from '../../types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -37,10 +37,13 @@ const MemberDetailScreen = () => {
   const handleApprove = async () => {
     try {
       setActionLoading(true);
+      console.log('Approving member:', memberId);
       await profileApi.updateProfile(memberId, { is_approved: true });
+      console.log('Member approved successfully');
       await loadMember();
       Alert.alert('Success', 'Member has been approved');
     } catch (error: any) {
+      console.error('Approve error:', error);
       Alert.alert('Error', error.message || 'Failed to approve member');
     } finally {
       setActionLoading(false);
@@ -48,17 +51,31 @@ const MemberDetailScreen = () => {
   };
 
   const handleDelete = async () => {
+    console.log('handleDelete called for member:', memberId);
     try {
       setActionLoading(true);
-      await profileApi.updateProfile(memberId, { 
-        is_approved: false,
-        full_name: '[Deleted]',
-        email: '[deleted]',
-        phone: '[deleted]',
+      console.log('Calling Edge Function: admin-delete-user');
+      console.log('With userId:', memberId);
+
+      // Call Edge Function to delete auth user (profile cascades automatically)
+      const response = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId: memberId }
       });
+
+      console.log('Edge Function response:', response);
+
+      const { data, error } = response;
+
+      if (error) {
+        console.error('Edge Function error:', error);
+        throw new Error(error.message || 'Failed to delete user');
+      }
+
+      console.log('Member deleted successfully:', data);
       setShowDeleteDialog(false);
       navigation.goBack();
     } catch (error: any) {
+      console.error('Delete error caught:', error);
       Alert.alert('Error', error.message || 'Failed to delete member');
     } finally {
       setActionLoading(false);
@@ -108,28 +125,28 @@ const MemberDetailScreen = () => {
             {member.photo_url ? (
               <Image source={{ uri: member.photo_url }} style={styles.avatar} />
             ) : (
-              <Avatar.Text 
-                size={100} 
-                label={getInitials(member.full_name)} 
+              <Avatar.Text
+                size={100}
+                label={getInitials(member.full_name)}
                 style={styles.avatarPlaceholder}
               />
             )}
-            
+
             <View style={styles.headerInfo}>
               <Text variant="headlineSmall" style={styles.name}>{member.full_name}</Text>
               <Text variant="bodyMedium" style={styles.email}>{member.email}</Text>
-              
+
               <View style={styles.chipContainer}>
-                <Chip 
+                <Chip
                   icon={member.is_approved ? 'check-circle' : 'clock-outline'}
                   style={[
-                    styles.statusChip, 
+                    styles.statusChip,
                     member.is_approved ? styles.approvedChip : styles.pendingChip
                   ]}
                 >
                   {member.is_approved ? 'Approved' : 'Pending Approval'}
                 </Chip>
-                
+
                 {member.is_verified && (
                   <Chip icon="shield-check" style={styles.verifiedChip}>
                     Verified
@@ -151,15 +168,15 @@ const MemberDetailScreen = () => {
 
           <View style={styles.section}>
             <Text variant="titleMedium" style={styles.sectionTitle}>Address</Text>
-            <InfoRow 
-              icon="map-marker" 
-              label="Street" 
-              value={member.address_street} 
+            <InfoRow
+              icon="map-marker"
+              label="Street"
+              value={member.address_street}
             />
-            <InfoRow 
-              icon="city" 
-              label="City, State, Postal" 
-              value={`${member.address_city}, ${member.address_state} ${member.address_postal}`} 
+            <InfoRow
+              icon="city"
+              label="City, State, Postal"
+              value={`${member.address_city}, ${member.address_state} ${member.address_postal}`}
             />
           </View>
 
@@ -200,15 +217,15 @@ const MemberDetailScreen = () => {
 
           <View style={styles.section}>
             <Text variant="titleMedium" style={styles.sectionTitle}>Account Information</Text>
-            <InfoRow 
-              icon="calendar-clock" 
-              label="Member Since" 
-              value={new Date(member.created_at).toLocaleDateString()} 
+            <InfoRow
+              icon="calendar-clock"
+              label="Member Since"
+              value={new Date(member.created_at).toLocaleDateString()}
             />
-            <InfoRow 
-              icon="update" 
-              label="Last Updated" 
-              value={new Date(member.updated_at).toLocaleDateString()} 
+            <InfoRow
+              icon="update"
+              label="Last Updated"
+              value={new Date(member.updated_at).toLocaleDateString()}
             />
           </View>
 
@@ -225,7 +242,7 @@ const MemberDetailScreen = () => {
                 Approve Member
               </Button>
             )}
-            
+
             <Button
               mode="outlined"
               onPress={() => setShowDeleteDialog(true)}
