@@ -14,10 +14,10 @@ export default function App() {
         <AuthProvider>
           <NavigationContainer>
             <AppNavigator />
-            <StatusBar style="auto" />
+            <StatusBar style="light" backgroundColor={theme.colors.background} />
           </NavigationContainer>
         </AuthProvider>
       </PaperProvider>
-    </SafeAreaProvider>
+    </SafeAreaProvider >
   );
 }

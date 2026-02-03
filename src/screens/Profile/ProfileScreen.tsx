@@ -1,38 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, useWindowDimensions } from 'react-native';
-import { Text, Card, Button, Avatar, Chip, Divider, Surface } from 'react-native-paper';
+import { Text, Button, Avatar, Chip, Divider, Surface, useTheme } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AppTheme } from '../../constants/theme';
 
 const ProfileScreen = () => {
+  const theme = useTheme<AppTheme>();
   const { profile, user, signOut, loading: authLoading } = useAuth();
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
   useEffect(() => {
-    // If auth is done loading and profile is still null, user was deleted
     if (!authLoading && !profile) {
       console.log('Profile not found - user may have been deleted');
       signOut();
     }
   }, [authLoading, profile, signOut]);
 
-  // Show loading only during initial auth check
   if (authLoading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text>Loading profile...</Text>
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
+        <Text style={{ color: theme.colors.primary }}>Loading profile...</Text>
       </View>
     );
   }
 
-  // If no profile after loading, show error briefly before signOut redirects
   if (!profile) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text>Profile not found. Redirecting...</Text>
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
+        <Text style={{ color: theme.colors.error }}>Profile not found. Redirecting...</Text>
       </View>
     );
   }
@@ -48,45 +47,53 @@ const ProfileScreen = () => {
 
   const InfoRow = ({ icon, label, value }: { icon: any; label: string; value: string }) => (
     <View style={styles.infoRow}>
-      <MaterialCommunityIcons name={icon as any} size={20} color="#64748b" style={styles.infoIcon} />
+      <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+        <MaterialCommunityIcons name={icon as any} size={20} color={theme.colors.primary} />
+      </View>
       <View style={styles.infoContent}>
-        <Text variant="bodySmall" style={styles.infoLabel}>{label}</Text>
-        <Text variant="bodyMedium" style={styles.infoValue}>{value || 'Not provided'}</Text>
+        <Text variant="labelSmall" style={{ color: theme.colors.secondary }}>{label}</Text>
+        <Text variant="bodyLarge" style={{ color: theme.colors.onSurface }}>{value || 'Not provided'}</Text>
       </View>
     </View>
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={isTablet && styles.tabletContent}>
-      <Surface style={[styles.card, isTablet && styles.tabletCard]} elevation={1}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={isTablet && styles.tabletContent}>
+      <Surface style={[styles.card, isTablet && styles.tabletCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
         <View style={styles.header}>
           {profile.photo_url ? (
             <Image source={{ uri: profile.photo_url }} style={styles.avatar} />
           ) : (
-            <Avatar.Text 
-              size={100} 
-              label={getInitials(profile.full_name)} 
-              style={styles.avatarPlaceholder}
+            <Avatar.Text
+              size={100}
+              label={getInitials(profile.full_name)}
+              style={[styles.avatarPlaceholder, { backgroundColor: theme.colors.primaryContainer }]}
+              color={theme.colors.primary}
             />
           )}
-          
+
           <View style={styles.headerInfo}>
-            <Text variant="headlineSmall" style={styles.name}>{profile.full_name}</Text>
-            <Text variant="bodyMedium" style={styles.email}>{profile.email}</Text>
-            
+            <Text variant="headlineMedium" style={[styles.name, { color: theme.colors.onSurface }]}>{profile.full_name}</Text>
+            <Text variant="bodyLarge" style={[styles.email, { color: theme.colors.secondary }]}>{profile.email}</Text>
+
             <View style={styles.chipContainer}>
-              <Chip 
+              <Chip
                 icon={profile.is_approved ? 'check-circle' : 'clock-outline'}
                 style={[
-                  styles.statusChip, 
-                  profile.is_approved ? styles.approvedChip : styles.pendingChip
+                  styles.statusChip,
+                  { backgroundColor: profile.is_approved ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)' }
                 ]}
+                textStyle={{ color: profile.is_approved ? '#10B981' : '#FBBF24' }}
               >
-                {profile.is_approved ? 'Approved' : 'Pending Approval'}
+                {profile.is_approved ? 'Approved' : 'Pending'}
               </Chip>
-              
+
               {profile.is_verified && (
-                <Chip icon="shield-check" style={styles.verifiedChip}>
+                <Chip
+                  icon="shield-check"
+                  style={[styles.statusChip, { backgroundColor: 'rgba(56, 189, 248, 0.2)' }]}
+                  textStyle={{ color: '#38BDF8' }}
+                >
                   Verified
                 </Chip>
               )}
@@ -94,62 +101,29 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        <Divider style={styles.divider} />
+        <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
         <View style={styles.section}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>Contact Information</Text>
+          <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Contact Information</Text>
           <InfoRow icon="phone" label="Phone" value={profile.phone} />
           <InfoRow icon="email" label="Email" value={profile.email} />
         </View>
 
-        <Divider style={styles.divider} />
+        <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
         <View style={styles.section}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>Address</Text>
-          <InfoRow 
-            icon="map-marker" 
-            label="Street" 
-            value={profile.address_street} 
+          <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Address</Text>
+          <InfoRow
+            icon="map-marker"
+            label="Street"
+            value={profile.address_street}
           />
-          <InfoRow 
-            icon="city" 
-            label="City, State, Postal" 
-            value={`${profile.address_city}, ${profile.address_state} ${profile.address_postal}`} 
+          <InfoRow
+            icon="city"
+            label="City, State, Postal"
+            value={`${profile.address_city}, ${profile.address_state} ${profile.address_postal}`}
           />
         </View>
-
-        {(profile.date_of_birth || profile.gender || profile.occupation) && (
-          <>
-            <Divider style={styles.divider} />
-            <View style={styles.section}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>Additional Information</Text>
-              {profile.date_of_birth && (
-                <InfoRow icon="calendar" label="Date of Birth" value={profile.date_of_birth} />
-              )}
-              {profile.gender && (
-                <InfoRow icon="gender-male-female" label="Gender" value={profile.gender} />
-              )}
-              {profile.occupation && (
-                <InfoRow icon="briefcase" label="Occupation" value={profile.occupation} />
-              )}
-            </View>
-          </>
-        )}
-
-        {(profile.emergency_contact_name || profile.emergency_contact_phone) && (
-          <>
-            <Divider style={styles.divider} />
-            <View style={styles.section}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>Emergency Contact</Text>
-              {profile.emergency_contact_name && (
-                <InfoRow icon="account" label="Name" value={profile.emergency_contact_name} />
-              )}
-              {profile.emergency_contact_phone && (
-                <InfoRow icon="phone" label="Phone" value={profile.emergency_contact_phone} />
-              )}
-            </View>
-          </>
-        )}
 
         <View style={styles.buttonContainer}>
           <Button
@@ -157,16 +131,18 @@ const ProfileScreen = () => {
             onPress={() => navigation.navigate('EditProfile' as never)}
             style={styles.button}
             icon="pencil"
+            contentStyle={styles.buttonContent}
           >
             Edit Profile
           </Button>
-          
+
           <Button
             mode="outlined"
             onPress={signOut}
-            style={styles.button}
+            style={[styles.button, { borderColor: theme.colors.error }]}
             icon="logout"
-            textColor="#dc2626"
+            textColor={theme.colors.error}
+            contentStyle={styles.buttonContent}
           >
             Sign Out
           </Button>
@@ -179,7 +155,6 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   centered: {
     justifyContent: 'center',
@@ -191,9 +166,8 @@ const styles = StyleSheet.create({
   },
   card: {
     margin: 16,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
+    padding: 24,
+    borderRadius: 24,
   },
   tabletCard: {
     maxWidth: 700,
@@ -202,7 +176,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   avatar: {
     width: 100,
@@ -210,74 +184,65 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   avatarPlaceholder: {
-    backgroundColor: '#2563eb',
+    borderRadius: 50,
   },
   headerInfo: {
-    marginLeft: 20,
+    marginLeft: 24,
     flex: 1,
   },
   name: {
     fontWeight: 'bold',
-    color: '#1e293b',
     marginBottom: 4,
   },
   email: {
-    color: '#64748b',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   chipContainer: {
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   statusChip: {
     height: 32,
-  },
-  approvedChip: {
-    backgroundColor: '#dcfce7',
-  },
-  pendingChip: {
-    backgroundColor: '#fef3c7',
-  },
-  verifiedChip: {
-    backgroundColor: '#dbeafe',
+    borderRadius: 16,
   },
   divider: {
-    marginVertical: 16,
-    backgroundColor: '#e2e8f0',
+    marginVertical: 24,
+    height: 1,
   },
   section: {
     marginBottom: 8,
   },
   sectionTitle: {
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 12,
+    fontWeight: '700',
+    marginBottom: 16,
+    letterSpacing: 0.5,
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  infoIcon: {
-    marginRight: 12,
-    marginTop: 2,
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   infoContent: {
     flex: 1,
   },
-  infoLabel: {
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  infoValue: {
-    color: '#1e293b',
-  },
   buttonContainer: {
-    marginTop: 24,
-    gap: 12,
+    marginTop: 32,
+    gap: 16,
   },
   button: {
-    borderRadius: 8,
+    borderRadius: 12,
+  },
+  buttonContent: {
+    paddingVertical: 8,
   },
 });
 

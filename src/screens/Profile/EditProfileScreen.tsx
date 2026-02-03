@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, useWindowDimensions, Alert } from 'react-native';
-import { TextInput, Button, Text, HelperText, Surface, Avatar, IconButton } from 'react-native-paper';
+import { TextInput, Button, Text, HelperText, Surface, Avatar, IconButton, useTheme } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { profileApi } from '../../services/supabase';
+import { AppTheme } from '../../constants/theme';
 
 const EditProfileScreen = () => {
+  const theme = useTheme<AppTheme>();
   const { profile, user, refreshProfile } = useAuth();
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -66,11 +68,11 @@ const EditProfileScreen = () => {
 
     if (!result.canceled && result.assets[0].base64) {
       setPhotoUri(result.assets[0].uri);
-      
+
       try {
         setLoading(true);
         const photoUrl = await profileApi.uploadPhoto(
-          user!.id, 
+          user!.id,
           result.assets[0].base64
         );
         await profileApi.updateProfile(user!.id, { photo_url: photoUrl });
@@ -145,18 +147,19 @@ const EditProfileScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={isTablet && styles.tabletContent}>
-      <Surface style={[styles.card, isTablet && styles.tabletCard]} elevation={1}>
-        <Text variant="headlineSmall" style={styles.title}>Edit Profile</Text>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={isTablet && styles.tabletContent}>
+      <Surface style={[styles.card, isTablet && styles.tabletCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
+        <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>Edit Profile</Text>
 
         <View style={styles.photoContainer}>
           {photoUri ? (
-            <Image source={{ uri: photoUri }} style={styles.photo} />
+            <Image source={{ uri: photoUri }} style={[styles.photo, { borderColor: theme.colors.surfaceVariant, borderWidth: 4 }]} />
           ) : (
-            <Avatar.Text 
-              size={120} 
-              label={getInitials(formData.full_name || 'User')} 
-              style={styles.avatarPlaceholder}
+            <Avatar.Text
+              size={120}
+              label={getInitials(formData.full_name || 'User')}
+              style={[styles.avatarPlaceholder, { backgroundColor: theme.colors.primaryContainer }]}
+              color={theme.colors.primary}
             />
           )}
           <IconButton
@@ -166,21 +169,24 @@ const EditProfileScreen = () => {
             loading={loading}
             disabled={loading}
             style={styles.cameraButton}
-            containerColor="#2563eb"
-            iconColor="#ffffff"
+            containerColor={theme.colors.primary}
+            iconColor={theme.colors.onPrimary}
           />
         </View>
 
-        <Text variant="titleMedium" style={styles.sectionTitle}>Basic Information</Text>
-        
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Basic Information</Text>
+
         <TextInput
           label="Full Name *"
           value={formData.full_name}
           onChangeText={(value) => updateField('full_name', value)}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           error={!!errors.full_name}
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
         {errors.full_name && <HelperText type="error">{errors.full_name}</HelperText>}
 
@@ -189,24 +195,31 @@ const EditProfileScreen = () => {
           value={formData.phone}
           onChangeText={(value) => updateField('phone', value)}
           keyboardType="phone-pad"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           error={!!errors.phone}
           disabled={saving}
           placeholder="+1-555-123-4567"
+          placeholderTextColor={theme.colors.outline}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
         {errors.phone && <HelperText type="error">{errors.phone}</HelperText>}
 
-        <Text variant="titleMedium" style={styles.sectionTitle}>Address *</Text>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Address *</Text>
 
         <TextInput
           label="Street Address"
           value={formData.address_street}
           onChangeText={(value) => updateField('address_street', value)}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           error={!!errors.address_street}
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
         {errors.address_street && <HelperText type="error">{errors.address_street}</HelperText>}
 
@@ -214,33 +227,46 @@ const EditProfileScreen = () => {
           label="City"
           value={formData.address_city}
           onChangeText={(value) => updateField('address_city', value)}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           error={!!errors.address_city}
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
         {errors.address_city && <HelperText type="error">{errors.address_city}</HelperText>}
 
         <View style={styles.row}>
-          <TextInput
-            label="State"
-            value={formData.address_state}
-            onChangeText={(value) => updateField('address_state', value)}
-            style={[styles.input, styles.halfInput]}
-            mode="outlined"
-            error={!!errors.address_state}
-            disabled={saving}
-          />
-          <TextInput
-            label="Postal Code"
-            value={formData.address_postal}
-            onChangeText={(value) => updateField('address_postal', value)}
-            keyboardType="numeric"
-            style={[styles.input, styles.halfInput]}
-            mode="outlined"
-            error={!!errors.address_postal}
-            disabled={saving}
-          />
+          <View style={styles.halfInputContainer}>
+            <TextInput
+              label="State"
+              value={formData.address_state}
+              onChangeText={(value) => updateField('address_state', value)}
+              style={[styles.input, { backgroundColor: 'transparent' }]}
+              mode="outlined"
+              error={!!errors.address_state}
+              disabled={saving}
+              textColor={theme.colors.onSurface}
+              outlineColor={theme.colors.outline}
+              activeOutlineColor={theme.colors.primary}
+            />
+          </View>
+          <View style={styles.halfInputContainer}>
+            <TextInput
+              label="Postal Code"
+              value={formData.address_postal}
+              onChangeText={(value) => updateField('address_postal', value)}
+              keyboardType="numeric"
+              style={[styles.input, { backgroundColor: 'transparent' }]}
+              mode="outlined"
+              error={!!errors.address_postal}
+              disabled={saving}
+              textColor={theme.colors.onSurface}
+              outlineColor={theme.colors.outline}
+              activeOutlineColor={theme.colors.primary}
+            />
+          </View>
         </View>
         {(errors.address_state || errors.address_postal) && (
           <HelperText type="error">
@@ -248,45 +274,58 @@ const EditProfileScreen = () => {
           </HelperText>
         )}
 
-        <Text variant="titleMedium" style={styles.sectionTitle}>Additional Information (Optional)</Text>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Additional Information (Optional)</Text>
 
         <TextInput
           label="Date of Birth"
           value={formData.date_of_birth}
           onChangeText={(value) => updateField('date_of_birth', value)}
           placeholder="YYYY-MM-DD"
-          style={styles.input}
+          placeholderTextColor={theme.colors.outline}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
 
         <TextInput
           label="Gender"
           value={formData.gender}
           onChangeText={(value) => updateField('gender', value)}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
 
         <TextInput
           label="Occupation"
           value={formData.occupation}
           onChangeText={(value) => updateField('occupation', value)}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
 
-        <Text variant="titleMedium" style={styles.sectionTitle}>Emergency Contact (Optional)</Text>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Emergency Contact (Optional)</Text>
 
         <TextInput
           label="Contact Name"
           value={formData.emergency_contact_name}
           onChangeText={(value) => updateField('emergency_contact_name', value)}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
 
         <TextInput
@@ -294,9 +333,12 @@ const EditProfileScreen = () => {
           value={formData.emergency_contact_phone}
           onChangeText={(value) => updateField('emergency_contact_phone', value)}
           keyboardType="phone-pad"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: 'transparent' }]}
           mode="outlined"
           disabled={saving}
+          textColor={theme.colors.onSurface}
+          outlineColor={theme.colors.outline}
+          activeOutlineColor={theme.colors.primary}
         />
 
         <View style={styles.buttonContainer}>
@@ -306,15 +348,18 @@ const EditProfileScreen = () => {
             loading={saving}
             disabled={saving}
             style={styles.button}
+            contentStyle={styles.buttonContent}
           >
             Save Changes
           </Button>
-          
+
           <Button
             mode="outlined"
             onPress={() => navigation.goBack()}
             disabled={saving}
-            style={styles.button}
+            style={[styles.button, { borderColor: theme.colors.outline }]}
+            textColor={theme.colors.onSurface}
+            contentStyle={styles.buttonContent}
           >
             Cancel
           </Button>
@@ -327,7 +372,6 @@ const EditProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   tabletContent: {
     padding: 24,
@@ -335,22 +379,21 @@ const styles = StyleSheet.create({
   },
   card: {
     margin: 16,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
+    padding: 24,
+    borderRadius: 24,
   },
   tabletCard: {
     maxWidth: 700,
     width: '100%',
   },
   title: {
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 20,
+    fontWeight: '800',
+    marginBottom: 24,
+    letterSpacing: 0.5,
   },
   photoContainer: {
     alignSelf: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
     position: 'relative',
   },
   photo: {
@@ -359,36 +402,40 @@ const styles = StyleSheet.create({
     borderRadius: 60,
   },
   avatarPlaceholder: {
-    backgroundColor: '#2563eb',
+    borderRadius: 60,
   },
   cameraButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
+    margin: 0,
   },
   sectionTitle: {
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: '700',
     marginTop: 16,
-    marginBottom: 12,
+    marginBottom: 16,
+    letterSpacing: 0.5,
   },
   input: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
   },
-  halfInput: {
+  halfInputContainer: {
     flex: 1,
   },
   buttonContainer: {
-    marginTop: 24,
-    gap: 12,
+    marginTop: 32,
+    gap: 16,
   },
   button: {
-    borderRadius: 8,
+    borderRadius: 12,
+  },
+  buttonContent: {
+    paddingVertical: 8,
   },
 });
 

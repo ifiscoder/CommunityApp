@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, useWindowDimensions, Alert } from 'react-native';
-import { Text, Button, Avatar, Chip, Divider, Surface, ActivityIndicator, Dialog, Portal } from 'react-native-paper';
+import { Text, Button, Avatar, Chip, Divider, Surface, ActivityIndicator, Dialog, Portal, useTheme } from 'react-native-paper';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { profileApi, supabase } from '../../services/supabase';
 import { MemberProfile } from '../../types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AppTheme } from '../../constants/theme';
 
 const MemberDetailScreen = () => {
+  const theme = useTheme<AppTheme>();
   const route = useRoute();
   const navigation = useNavigation();
   const { memberId } = route.params as { memberId: string };
@@ -93,34 +95,36 @@ const MemberDetailScreen = () => {
 
   const InfoRow = ({ icon, label, value }: { icon: any; label: string; value: string }) => (
     <View style={styles.infoRow}>
-      <MaterialCommunityIcons name={icon as any} size={20} color="#64748b" style={styles.infoIcon} />
+      <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+        <MaterialCommunityIcons name={icon as any} size={20} color={theme.colors.primary} />
+      </View>
       <View style={styles.infoContent}>
-        <Text variant="bodySmall" style={styles.infoLabel}>{label}</Text>
-        <Text variant="bodyMedium" style={styles.infoValue}>{value || 'Not provided'}</Text>
+        <Text variant="labelSmall" style={{ color: theme.colors.secondary }}>{label}</Text>
+        <Text variant="bodyLarge" style={{ color: theme.colors.onSurface }}>{value || 'Not provided'}</Text>
       </View>
     </View>
   );
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   if (!member) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text>Member not found</Text>
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
+        <Text style={{ color: theme.colors.error }}>Member not found</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView contentContainerStyle={isTablet && styles.tabletContent}>
-        <Surface style={[styles.card, isTablet && styles.tabletCard]} elevation={1}>
+        <Surface style={[styles.card, isTablet && styles.tabletCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
           <View style={styles.header}>
             {member.photo_url ? (
               <Image source={{ uri: member.photo_url }} style={styles.avatar} />
@@ -128,27 +132,33 @@ const MemberDetailScreen = () => {
               <Avatar.Text
                 size={100}
                 label={getInitials(member.full_name)}
-                style={styles.avatarPlaceholder}
+                style={[styles.avatarPlaceholder, { backgroundColor: theme.colors.primaryContainer }]}
+                color={theme.colors.primary}
               />
             )}
 
             <View style={styles.headerInfo}>
-              <Text variant="headlineSmall" style={styles.name}>{member.full_name}</Text>
-              <Text variant="bodyMedium" style={styles.email}>{member.email}</Text>
+              <Text variant="headlineMedium" style={[styles.name, { color: theme.colors.onSurface }]}>{member.full_name}</Text>
+              <Text variant="bodyLarge" style={[styles.email, { color: theme.colors.secondary }]}>{member.email}</Text>
 
               <View style={styles.chipContainer}>
                 <Chip
                   icon={member.is_approved ? 'check-circle' : 'clock-outline'}
                   style={[
                     styles.statusChip,
-                    member.is_approved ? styles.approvedChip : styles.pendingChip
+                    { backgroundColor: member.is_approved ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)' }
                   ]}
+                  textStyle={{ color: member.is_approved ? '#10B981' : '#FBBF24' }}
                 >
-                  {member.is_approved ? 'Approved' : 'Pending Approval'}
+                  {member.is_approved ? 'Approved' : 'Pending'}
                 </Chip>
 
                 {member.is_verified && (
-                  <Chip icon="shield-check" style={styles.verifiedChip}>
+                  <Chip
+                    icon="shield-check"
+                    style={[styles.statusChip, { backgroundColor: 'rgba(56, 189, 248, 0.2)' }]}
+                    textStyle={{ color: '#38BDF8' }}
+                  >
                     Verified
                   </Chip>
                 )}
@@ -156,18 +166,18 @@ const MemberDetailScreen = () => {
             </View>
           </View>
 
-          <Divider style={styles.divider} />
+          <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
           <View style={styles.section}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>Contact Information</Text>
+            <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Contact Information</Text>
             <InfoRow icon="phone" label="Phone" value={member.phone} />
             <InfoRow icon="email" label="Email" value={member.email} />
           </View>
 
-          <Divider style={styles.divider} />
+          <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
           <View style={styles.section}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>Address</Text>
+            <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Address</Text>
             <InfoRow
               icon="map-marker"
               label="Street"
@@ -182,9 +192,9 @@ const MemberDetailScreen = () => {
 
           {(member.date_of_birth || member.gender || member.occupation) && (
             <>
-              <Divider style={styles.divider} />
+              <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
               <View style={styles.section}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>Additional Information</Text>
+                <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Additional Information</Text>
                 {member.date_of_birth && (
                   <InfoRow icon="calendar" label="Date of Birth" value={member.date_of_birth} />
                 )}
@@ -200,9 +210,9 @@ const MemberDetailScreen = () => {
 
           {(member.emergency_contact_name || member.emergency_contact_phone) && (
             <>
-              <Divider style={styles.divider} />
+              <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
               <View style={styles.section}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>Emergency Contact</Text>
+                <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Emergency Contact</Text>
                 {member.emergency_contact_name && (
                   <InfoRow icon="account" label="Name" value={member.emergency_contact_name} />
                 )}
@@ -213,10 +223,10 @@ const MemberDetailScreen = () => {
             </>
           )}
 
-          <Divider style={styles.divider} />
+          <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
           <View style={styles.section}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>Account Information</Text>
+            <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.primary }]}>Account Information</Text>
             <InfoRow
               icon="calendar-clock"
               label="Member Since"
@@ -238,6 +248,7 @@ const MemberDetailScreen = () => {
                 disabled={actionLoading}
                 style={[styles.button, styles.approveButton]}
                 icon="check"
+                contentStyle={styles.buttonContent}
               >
                 Approve Member
               </Button>
@@ -247,9 +258,10 @@ const MemberDetailScreen = () => {
               mode="outlined"
               onPress={() => setShowDeleteDialog(true)}
               disabled={actionLoading}
-              style={[styles.button, styles.deleteButton]}
-              textColor="#dc2626"
+              style={[styles.button, { borderColor: theme.colors.error }]}
+              textColor={theme.colors.error}
               icon="delete"
+              contentStyle={styles.buttonContent}
             >
               Delete Member
             </Button>
@@ -258,16 +270,16 @@ const MemberDetailScreen = () => {
       </ScrollView>
 
       <Portal>
-        <Dialog visible={showDeleteDialog} onDismiss={() => setShowDeleteDialog(false)}>
-          <Dialog.Title>Delete Member</Dialog.Title>
+        <Dialog visible={showDeleteDialog} onDismiss={() => setShowDeleteDialog(false)} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: theme.colors.onSurface }}>Delete Member</Dialog.Title>
           <Dialog.Content>
-            <Text>
+            <Text style={{ color: theme.colors.onSurfaceVariant }}>
               Are you sure you want to delete {member.full_name}? This action cannot be undone.
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowDeleteDialog(false)}>Cancel</Button>
-            <Button onPress={handleDelete} textColor="#dc2626">Delete</Button>
+            <Button onPress={() => setShowDeleteDialog(false)} textColor={theme.colors.primary}>Cancel</Button>
+            <Button onPress={handleDelete} textColor={theme.colors.error}>Delete</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -278,7 +290,6 @@ const MemberDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   centered: {
     justifyContent: 'center',
@@ -290,9 +301,8 @@ const styles = StyleSheet.create({
   },
   card: {
     margin: 16,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
+    padding: 24,
+    borderRadius: 24,
   },
   tabletCard: {
     maxWidth: 700,
@@ -301,7 +311,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   avatar: {
     width: 100,
@@ -309,80 +319,68 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   avatarPlaceholder: {
-    backgroundColor: '#2563eb',
+    borderRadius: 50,
   },
   headerInfo: {
-    marginLeft: 20,
+    marginLeft: 24,
     flex: 1,
   },
   name: {
     fontWeight: 'bold',
-    color: '#1e293b',
     marginBottom: 4,
   },
   email: {
-    color: '#64748b',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   chipContainer: {
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   statusChip: {
     height: 32,
-  },
-  approvedChip: {
-    backgroundColor: '#dcfce7',
-  },
-  pendingChip: {
-    backgroundColor: '#fef3c7',
-  },
-  verifiedChip: {
-    backgroundColor: '#dbeafe',
+    borderRadius: 16,
   },
   divider: {
-    marginVertical: 16,
-    backgroundColor: '#e2e8f0',
+    marginVertical: 24,
+    height: 1,
   },
   section: {
     marginBottom: 8,
   },
   sectionTitle: {
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 12,
+    fontWeight: '700',
+    marginBottom: 16,
+    letterSpacing: 0.5,
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  infoIcon: {
-    marginRight: 12,
-    marginTop: 2,
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   infoContent: {
     flex: 1,
   },
-  infoLabel: {
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  infoValue: {
-    color: '#1e293b',
-  },
   buttonContainer: {
-    marginTop: 24,
-    gap: 12,
+    marginTop: 32,
+    gap: 16,
   },
   button: {
-    borderRadius: 8,
+    borderRadius: 12,
+  },
+  buttonContent: {
+    paddingVertical: 8,
   },
   approveButton: {
-    backgroundColor: '#16a34a',
-  },
-  deleteButton: {
-    borderColor: '#dc2626',
+    backgroundColor: '#10B981',
   },
 });
 
