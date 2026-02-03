@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, useWindowDimensions, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, StyleSheet, FlatList, useWindowDimensions, TouchableOpacity, AppState } from 'react-native';
 import { Text, Card, Avatar, Searchbar, Chip, ActivityIndicator, Surface, IconButton } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-import { profileApi } from '../../services/supabase';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { profileApi, supabase } from '../../services/supabase';
 import { MemberProfile } from '../../types';
 
 const AdminDashboardScreen = () => {
@@ -15,8 +15,42 @@ const AdminDashboardScreen = () => {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
+  // Reload members when screen comes into focus (after approve/delete)
+  useFocusEffect(
+    useCallback(() => {
+      loadMembers();
+    }, [])
+  );
+
+  // Realtime subscription for new/updated members
   useEffect(() => {
-    loadMembers();
+    const subscription = supabase
+      .channel('profiles_changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        (payload) => {
+          console.log('Profile change detected:', payload);
+          loadMembers(); // Refresh list when any profile changes
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Refresh when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        loadMembers();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   useEffect(() => {
