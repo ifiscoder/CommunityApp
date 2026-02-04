@@ -229,18 +229,6 @@ const LoginScreen = () => {
                   />
                 </View>
 
-                {/* Forgot Password Link */}
-                <Button
-                  mode="text"
-                  compact
-                  onPress={() => {/* TODO: Implement forgot password */ }}
-                  style={styles.forgotButton}
-                  labelStyle={styles.forgotLabel}
-                  textColor={theme.colors.primary}
-                >
-                  Forgot Password?
-                </Button>
-
                 {/* Sign In Button with Animation */}
                 <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                   <Button

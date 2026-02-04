@@ -133,7 +133,7 @@ const AdminDashboardScreen = () => {
                   styles.statusChip,
                   { backgroundColor: item.is_approved ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)' }
                 ]}
-                textStyle={{ color: item.is_approved ? '#10B981' : '#FBBF24', fontSize: 12 }}
+                textStyle={{ color: item.is_approved ? '#10B981' : '#FBBF24', fontSize: 12, textDecorationLine: 'none' }}
               >
                 {item.is_approved ? 'Approved' : 'Pending'}
               </Chip>
@@ -141,7 +141,7 @@ const AdminDashboardScreen = () => {
               {item.is_verified && (
                 <Chip
                   style={[styles.verifiedChip, { backgroundColor: 'rgba(56, 189, 248, 0.2)' }]}
-                  textStyle={{ color: '#38BDF8', fontSize: 12 }}
+                  textStyle={{ color: '#38BDF8', fontSize: 12, textDecorationLine: 'none' }}
                 >
                   Verified
                 </Chip>

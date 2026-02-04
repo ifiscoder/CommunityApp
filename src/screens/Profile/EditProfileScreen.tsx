@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, useWindowDimensions, Alert } from 'react-native';
-import { TextInput, Button, Text, HelperText, Surface, Avatar, IconButton, useTheme } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Image, useWindowDimensions, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { TextInput, Button, Text, HelperText, Surface, Avatar, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -51,6 +51,8 @@ const EditProfileScreen = () => {
     }
   }, [profile]);
 
+  const MAX_FILE_SIZE = 500 * 1024; // 500KB in bytes
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -67,13 +69,26 @@ const EditProfileScreen = () => {
     });
 
     if (!result.canceled && result.assets[0].base64) {
+      // Check file size
+      const base64String = result.assets[0].base64;
+      const fileSize = (base64String.length * 3) / 4; // Approximate size in bytes
+      
+      if (fileSize > MAX_FILE_SIZE) {
+        Alert.alert(
+          'File Too Large', 
+          'Image size must be less than 500KB. Please choose a smaller image.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       setPhotoUri(result.assets[0].uri);
 
       try {
         setLoading(true);
         const photoUrl = await profileApi.uploadPhoto(
           user!.id,
-          result.assets[0].base64
+          base64String
         );
         await profileApi.updateProfile(user!.id, { photo_url: photoUrl });
         await refreshProfile();
@@ -147,11 +162,19 @@ const EditProfileScreen = () => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={isTablet && styles.tabletContent}>
-      <Surface style={[styles.card, isTablet && styles.tabletCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
-        <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>Edit Profile</Text>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <ScrollView 
+        contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}
+      >
+        <Surface style={[styles.card, isTablet && styles.tabletCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
+          {/* Title removed - using navigation header instead */}
 
-        <View style={styles.photoContainer}>
+          <View style={styles.photoContainer}>
           {photoUri ? (
             <Image source={{ uri: photoUri }} style={[styles.photo, { borderColor: theme.colors.surfaceVariant, borderWidth: 4 }]} />
           ) : (
@@ -366,12 +389,16 @@ const EditProfileScreen = () => {
         </View>
       </Surface>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   tabletContent: {
     padding: 24,
@@ -386,11 +413,7 @@ const styles = StyleSheet.create({
     maxWidth: 700,
     width: '100%',
   },
-  title: {
-    fontWeight: '800',
-    marginBottom: 24,
-    letterSpacing: 0.5,
-  },
+
   photoContainer: {
     alignSelf: 'center',
     marginBottom: 32,

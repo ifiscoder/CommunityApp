@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, useWindowDimensions } from 'react-native';
-import { Text, Button, Avatar, Chip, Divider, Surface, useTheme } from 'react-native-paper';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, Image, useWindowDimensions, RefreshControl } from 'react-native';
+import { Text, Button, Avatar, Chip, Divider, Surface, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,10 +8,11 @@ import { AppTheme } from '../../constants/theme';
 
 const ProfileScreen = () => {
   const theme = useTheme<AppTheme>();
-  const { profile, user, signOut, loading: authLoading } = useAuth();
+  const { profile, user, signOut, loading: authLoading, refreshProfile } = useAuth();
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !profile) {
@@ -19,6 +20,17 @@ const ProfileScreen = () => {
       signOut();
     }
   }, [authLoading, profile, signOut]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshProfile]);
 
   if (authLoading) {
     return (
@@ -58,7 +70,18 @@ const ProfileScreen = () => {
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={isTablet && styles.tabletContent}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: theme.colors.background }]} 
+      contentContainerStyle={isTablet && styles.tabletContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[theme.colors.primary]}
+          tintColor={theme.colors.primary}
+        />
+      }
+    >
       <Surface style={[styles.card, isTablet && styles.tabletCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
         <View style={styles.header}>
           {profile.photo_url ? (
@@ -83,7 +106,7 @@ const ProfileScreen = () => {
                   styles.statusChip,
                   { backgroundColor: profile.is_approved ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)' }
                 ]}
-                textStyle={{ color: profile.is_approved ? '#10B981' : '#FBBF24' }}
+                textStyle={{ color: profile.is_approved ? '#10B981' : '#FBBF24', textDecorationLine: 'none' }}
               >
                 {profile.is_approved ? 'Approved' : 'Pending'}
               </Chip>
@@ -92,7 +115,7 @@ const ProfileScreen = () => {
                 <Chip
                   icon="shield-check"
                   style={[styles.statusChip, { backgroundColor: 'rgba(56, 189, 248, 0.2)' }]}
-                  textStyle={{ color: '#38BDF8' }}
+                  textStyle={{ color: '#38BDF8', textDecorationLine: 'none' }}
                 >
                   Verified
                 </Chip>

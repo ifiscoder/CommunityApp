@@ -53,6 +53,8 @@ const MemberDetailScreen = () => {
   };
 
   const handleDelete = async () => {
+    if (actionLoading) return; // Prevent multiple clicks
+    
     console.log('handleDelete called for member:', memberId);
     try {
       setActionLoading(true);
@@ -269,8 +271,16 @@ const MemberDetailScreen = () => {
         </Surface>
       </ScrollView>
 
+      {/* Loading Overlay */}
+      {actionLoading && (
+        <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={{ color: '#fff', marginTop: 16 }}>Processing...</Text>
+        </View>
+      )}
+
       <Portal>
-        <Dialog visible={showDeleteDialog} onDismiss={() => setShowDeleteDialog(false)} style={{ backgroundColor: theme.colors.surface }}>
+        <Dialog visible={showDeleteDialog} onDismiss={() => !actionLoading && setShowDeleteDialog(false)} style={{ backgroundColor: theme.colors.surface }}>
           <Dialog.Title style={{ color: theme.colors.onSurface }}>Delete Member</Dialog.Title>
           <Dialog.Content>
             <Text style={{ color: theme.colors.onSurfaceVariant }}>
@@ -278,8 +288,8 @@ const MemberDetailScreen = () => {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowDeleteDialog(false)} textColor={theme.colors.primary}>Cancel</Button>
-            <Button onPress={handleDelete} textColor={theme.colors.error}>Delete</Button>
+            <Button onPress={() => setShowDeleteDialog(false)} textColor={theme.colors.primary} disabled={actionLoading}>Cancel</Button>
+            <Button onPress={handleDelete} textColor={theme.colors.error} loading={actionLoading} disabled={actionLoading}>Delete</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -294,6 +304,16 @@ const styles = StyleSheet.create({
   centered: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
   tabletContent: {
     padding: 24,
