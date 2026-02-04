@@ -1,14 +1,32 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
-import { TextInput, Button, Text, HelperText, Surface, ProgressBar, useTheme } from 'react-native-paper';
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Keyboard,
+} from 'react-native';
+import {
+  TextInput,
+  Button,
+  Text,
+  HelperText,
+  Surface,
+  ProgressBar,
+  useTheme,
+} from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { AppTheme } from '../../constants/theme';
 
 const steps = [
-  { title: 'Account', fields: ['email', 'password'] },
-  { title: 'Basic Info', fields: ['full_name', 'phone'] },
-  { title: 'Address', fields: ['address_street', 'address_city', 'address_state', 'address_postal'] },
+  { title: 'Account', subtitle: 'Create your login credentials', icon: 'account-circle-outline', fields: ['email', 'password'] },
+  { title: 'Personal Info', subtitle: 'Tell us about yourself', icon: 'card-account-details-outline', fields: ['full_name', 'phone'] },
+  { title: 'Address', subtitle: 'Where can we reach you?', icon: 'map-marker-outline', fields: ['address_street', 'address_city', 'address_state', 'address_postal'] },
 ];
 
 const RegisterScreen = () => {
@@ -79,17 +97,20 @@ const RegisterScreen = () => {
   };
 
   const handleNext = () => {
+    Keyboard.dismiss();
     if (validateStep(currentStep)) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
+    Keyboard.dismiss();
     setCurrentStep(currentStep - 1);
     setErrors({});
   };
 
   const handleSubmit = async () => {
+    Keyboard.dismiss();
     if (!validateStep(currentStep)) return;
 
     setLoading(true);
@@ -123,33 +144,38 @@ const RegisterScreen = () => {
         return (
           <View>
             <TextInput
-              label="Email"
+              label="Email Address"
               value={formData.email}
               onChangeText={(value) => updateField('email', value)}
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.input, { backgroundColor: 'transparent' }]}
+              autoComplete="email"
+              style={styles.input}
               mode="outlined"
               error={!!errors.email}
               disabled={loading}
               textColor={theme.colors.onSurface}
               outlineColor={theme.colors.outline}
               activeOutlineColor={theme.colors.primary}
+              outlineStyle={styles.inputOutline}
+              left={<TextInput.Icon icon="email-outline" color={theme.colors.secondary} />}
             />
             {errors.email && <HelperText type="error" style={styles.helperText}>{errors.email}</HelperText>}
 
             <TextInput
-              label="Password"
+              label="Create Password"
               value={formData.password}
               onChangeText={(value) => updateField('password', value)}
               secureTextEntry
-              style={[styles.input, { backgroundColor: 'transparent' }]}
+              style={styles.input}
               mode="outlined"
               error={!!errors.password}
               disabled={loading}
               textColor={theme.colors.onSurface}
               outlineColor={theme.colors.outline}
               activeOutlineColor={theme.colors.primary}
+              outlineStyle={styles.inputOutline}
+              left={<TextInput.Icon icon="lock-outline" color={theme.colors.secondary} />}
             />
             {errors.password && <HelperText type="error" style={styles.helperText}>{errors.password}</HelperText>}
           </View>
@@ -162,13 +188,15 @@ const RegisterScreen = () => {
               label="Full Name"
               value={formData.full_name}
               onChangeText={(value) => updateField('full_name', value)}
-              style={[styles.input, { backgroundColor: 'transparent' }]}
+              style={styles.input}
               mode="outlined"
               error={!!errors.full_name}
               disabled={loading}
               textColor={theme.colors.onSurface}
               outlineColor={theme.colors.outline}
               activeOutlineColor={theme.colors.primary}
+              outlineStyle={styles.inputOutline}
+              left={<TextInput.Icon icon="account-outline" color={theme.colors.secondary} />}
             />
             {errors.full_name && <HelperText type="error" style={styles.helperText}>{errors.full_name}</HelperText>}
 
@@ -177,15 +205,17 @@ const RegisterScreen = () => {
               value={formData.phone}
               onChangeText={(value) => updateField('phone', value)}
               keyboardType="phone-pad"
-              style={[styles.input, { backgroundColor: 'transparent' }]}
+              style={styles.input}
               mode="outlined"
               error={!!errors.phone}
               disabled={loading}
-              placeholder="+1-555-123-4567"
+              placeholder="+91 98765 43210"
               placeholderTextColor={theme.colors.outline}
               textColor={theme.colors.onSurface}
               outlineColor={theme.colors.outline}
               activeOutlineColor={theme.colors.primary}
+              outlineStyle={styles.inputOutline}
+              left={<TextInput.Icon icon="phone-outline" color={theme.colors.secondary} />}
             />
             {errors.phone && <HelperText type="error" style={styles.helperText}>{errors.phone}</HelperText>}
           </View>
@@ -267,96 +297,109 @@ const RegisterScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: theme.colors.background }]}
+      edges={['top', 'left', 'right']}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.headerContainer}>
-          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onBackground }]}>
-            Create Account
-          </Text>
-          <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.secondary }]}>
-            Join our community today
-          </Text>
-        </View>
-
-        <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={4}>
-          <View style={styles.progressContainer}>
-            <Text variant="labelMedium" style={[styles.stepIndicator, { color: theme.colors.primary }]}>
-              Step {currentStep + 1} of {steps.length}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={Keyboard.dismiss}
+        >
+          <View style={styles.headerContainer}>
+            <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onBackground }]}>
+              Create Account
             </Text>
-            <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginBottom: 8 }}>
-              {steps[currentStep].title}
+            <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.secondary }]}>
+              Join our community today
             </Text>
-            <ProgressBar
-              progress={(currentStep + 1) / steps.length}
-              color={theme.colors.primary}
-              style={styles.progressBar}
-            />
           </View>
 
-          {submitError ? (
-            <HelperText type="error" visible={!!submitError} style={styles.error}>
-              {submitError}
-            </HelperText>
-          ) : null}
+          <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
+            <View style={styles.progressContainer}>
+              <Text variant="labelMedium" style={[styles.stepIndicator, { color: theme.colors.primary }]}>
+                Step {currentStep + 1} of {steps.length}
+              </Text>
+              <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginBottom: 8 }}>
+                {steps[currentStep].title}
+              </Text>
+              <ProgressBar
+                progress={(currentStep + 1) / steps.length}
+                color={theme.colors.primary}
+                style={styles.progressBar}
+              />
+            </View>
 
-          {renderStep()}
+            {submitError ? (
+              <HelperText type="error" visible={!!submitError} style={styles.error}>
+                {submitError}
+              </HelperText>
+            ) : null}
 
-          <View style={styles.buttonContainer}>
-            {currentStep > 0 && (
-              <Button
-                mode="outlined"
-                onPress={handleBack}
-                disabled={loading}
-                style={[styles.button, styles.backButton, { borderColor: theme.colors.outline }]}
-                textColor={theme.colors.onSurface}
-              >
-                Back
-              </Button>
-            )}
+            {renderStep()}
 
-            {currentStep < steps.length - 1 ? (
-              <Button
-                mode="contained"
-                onPress={handleNext}
-                disabled={loading}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                mode="contained"
-                onPress={handleSubmit}
-                loading={loading}
-                disabled={loading}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-              >
-                Create Account
-              </Button>
-            )}
-          </View>
+            <View style={styles.buttonContainer}>
+              {currentStep > 0 && (
+                <Button
+                  mode="outlined"
+                  onPress={handleBack}
+                  disabled={loading}
+                  style={[styles.button, styles.backButton, { borderColor: theme.colors.outline }]}
+                  textColor={theme.colors.onSurface}
+                >
+                  Back
+                </Button>
+              )}
 
-          <Button
-            mode="text"
-            onPress={() => navigation.navigate('Login' as never)}
-            disabled={loading}
-            style={styles.linkButton}
-            textColor={theme.colors.primary}
-          >
-            Already have an account? Sign In
-          </Button>
-        </Surface>
-      </ScrollView>
-    </KeyboardAvoidingView>
+              {currentStep < steps.length - 1 ? (
+                <Button
+                  mode="contained"
+                  onPress={handleNext}
+                  disabled={loading}
+                  style={styles.button}
+                  contentStyle={styles.buttonContent}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  mode="contained"
+                  onPress={handleSubmit}
+                  loading={loading}
+                  disabled={loading}
+                  style={styles.button}
+                  contentStyle={styles.buttonContent}
+                >
+                  {loading ? 'Creating...' : 'Create Account'}
+                </Button>
+              )}
+            </View>
+
+            <Button
+              mode="text"
+              onPress={() => navigation.navigate('Login' as never)}
+              disabled={loading}
+              style={styles.linkButton}
+              textColor={theme.colors.primary}
+            >
+              Already have an account? Sign In
+            </Button>
+          </Surface>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -400,6 +443,10 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 8,
+    backgroundColor: 'transparent',
+  },
+  inputOutline: {
+    borderRadius: 14,
   },
   helperText: {
     marginBottom: 8,

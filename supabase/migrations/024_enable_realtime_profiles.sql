@@ -1,2 +1,0 @@
--- This file was removed - Realtime not needed
--- Admin dashboard uses useFocusEffect and AppState instead
