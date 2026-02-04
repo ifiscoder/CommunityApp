@@ -63,8 +63,10 @@ const AdminDashboardScreen = () => {
     try {
       setLoading(true);
       const data = await profileApi.getAllProfiles();
-      setMembers(data);
-      setFilteredMembers(data);
+      // Filter out admin profiles - only show members
+      const memberProfiles = data.filter(m => m.role !== 'admin');
+      setMembers(memberProfiles);
+      setFilteredMembers(memberProfiles);
     } catch (error) {
       console.error('Error loading members:', error);
     } finally {
@@ -123,25 +125,37 @@ const AdminDashboardScreen = () => {
           <View style={styles.info}>
             <Text variant="titleMedium" style={[styles.name, { color: theme.colors.onSurface }]}>{item.full_name}</Text>
             <Text variant="bodySmall" style={[styles.email, { color: theme.colors.secondary }]}>{item.email}</Text>
-            <Text variant="bodySmall" style={[styles.location, { color: theme.colors.outline }]}>
-              {item.address_city}, {item.address_state}
+            <Text variant="bodySmall" style={[styles.phone, { color: theme.colors.outline }]}>
+              {item.phone}
             </Text>
 
             <View style={styles.chipContainer}>
               <Chip
+                mode="flat"
                 style={[
                   styles.statusChip,
                   { backgroundColor: item.is_approved ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)' }
                 ]}
-                textStyle={{ color: item.is_approved ? '#10B981' : '#FBBF24', fontSize: 12, textDecorationLine: 'none' }}
+                textStyle={{ 
+                  color: item.is_approved ? '#10B981' : '#FBBF24', 
+                  fontSize: 11, 
+                  fontWeight: '600',
+                  lineHeight: 14
+                }}
               >
                 {item.is_approved ? 'Approved' : 'Pending'}
               </Chip>
 
               {item.is_verified && (
                 <Chip
+                  mode="flat"
                   style={[styles.verifiedChip, { backgroundColor: 'rgba(56, 189, 248, 0.2)' }]}
-                  textStyle={{ color: '#38BDF8', fontSize: 12, textDecorationLine: 'none' }}
+                  textStyle={{ 
+                    color: '#38BDF8', 
+                    fontSize: 11, 
+                    fontWeight: '600',
+                    lineHeight: 14
+                  }}
                 >
                   Verified
                 </Chip>
@@ -251,6 +265,7 @@ const AdminDashboardScreen = () => {
           isTablet && styles.tabletList
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshing={loading}
         onRefresh={loadMembers}
         ListEmptyComponent={
@@ -356,20 +371,25 @@ const styles = StyleSheet.create({
   email: {
     marginBottom: 2,
   },
-  location: {
+  phone: {
     marginBottom: 8,
   },
   chipContainer: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   statusChip: {
-    height: 28,
-    borderRadius: 14,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   verifiedChip: {
-    height: 28,
-    borderRadius: 14,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyContainer: {
     alignItems: 'center',

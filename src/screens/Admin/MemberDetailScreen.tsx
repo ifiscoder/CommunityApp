@@ -16,6 +16,7 @@ const MemberDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
@@ -37,13 +38,15 @@ const MemberDetailScreen = () => {
   };
 
   const handleApprove = async () => {
+    if (actionLoading) return;
+    
     try {
       setActionLoading(true);
       console.log('Approving member:', memberId);
       await profileApi.updateProfile(memberId, { is_approved: true });
       console.log('Member approved successfully');
+      setShowApproveDialog(false);
       await loadMember();
-      Alert.alert('Success', 'Member has been approved');
     } catch (error: any) {
       console.error('Approve error:', error);
       Alert.alert('Error', error.message || 'Failed to approve member');
@@ -125,7 +128,7 @@ const MemberDetailScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={isTablet && styles.tabletContent}>
+      <ScrollView contentContainerStyle={isTablet && styles.tabletContent} keyboardShouldPersistTaps="handled">
         <Surface style={[styles.card, isTablet && styles.tabletCard, { backgroundColor: theme.colors.surface }]} elevation={2}>
           <View style={styles.header}>
             {member.photo_url ? (
@@ -245,8 +248,7 @@ const MemberDetailScreen = () => {
             {!member.is_approved && (
               <Button
                 mode="contained"
-                onPress={handleApprove}
-                loading={actionLoading}
+                onPress={() => setShowApproveDialog(true)}
                 disabled={actionLoading}
                 style={[styles.button, styles.approveButton]}
                 icon="check"
@@ -280,16 +282,103 @@ const MemberDetailScreen = () => {
       )}
 
       <Portal>
-        <Dialog visible={showDeleteDialog} onDismiss={() => !actionLoading && setShowDeleteDialog(false)} style={{ backgroundColor: theme.colors.surface }}>
-          <Dialog.Title style={{ color: theme.colors.onSurface }}>Delete Member</Dialog.Title>
-          <Dialog.Content>
-            <Text style={{ color: theme.colors.onSurfaceVariant }}>
-              Are you sure you want to delete {member.full_name}? This action cannot be undone.
+        <Dialog 
+          visible={showDeleteDialog} 
+          onDismiss={() => !actionLoading && setShowDeleteDialog(false)} 
+          style={[styles.dialog, { backgroundColor: theme.colors.surface }]}
+        >
+          <View style={styles.dialogHeader}>
+            <View style={[styles.dialogIconContainer, { backgroundColor: theme.colors.errorContainer }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={theme.colors.error} />
+            </View>
+            <Dialog.Title style={[styles.dialogTitle, { color: theme.colors.onSurface }]}>
+              Delete Member
+            </Dialog.Title>
+          </View>
+          
+          <Dialog.Content style={styles.dialogContent}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+              Are you sure you want to delete{' '}
+              <Text style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+                {member.full_name}
+              </Text>
+              ?
+            </Text>
+            <Text variant="bodySmall" style={[styles.dialogWarning, { color: theme.colors.error }]}>
+              This action cannot be undone.
             </Text>
           </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowDeleteDialog(false)} textColor={theme.colors.primary} disabled={actionLoading}>Cancel</Button>
-            <Button onPress={handleDelete} textColor={theme.colors.error} loading={actionLoading} disabled={actionLoading}>Delete</Button>
+          
+          <Dialog.Actions style={styles.dialogActions}>
+            <Button 
+              mode="outlined"
+              onPress={() => setShowDeleteDialog(false)} 
+              disabled={actionLoading}
+              style={[styles.dialogButton, { borderColor: theme.colors.outline }]}
+              textColor={theme.colors.onSurface}
+            >
+              Cancel
+            </Button>
+            <Button 
+              mode="contained"
+              onPress={handleDelete} 
+              loading={actionLoading} 
+              disabled={actionLoading}
+              style={[styles.dialogButton, styles.deleteButton, { backgroundColor: theme.colors.error }]}
+              textColor={theme.colors.onError}
+            >
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+        {/* Approve Confirmation Dialog */}
+        <Dialog 
+          visible={showApproveDialog} 
+          onDismiss={() => !actionLoading && setShowApproveDialog(false)} 
+          style={[styles.dialog, { backgroundColor: theme.colors.surface }]}
+        >
+          <View style={styles.dialogHeader}>
+            <View style={[styles.dialogIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.2)' }]}>
+              <MaterialCommunityIcons name="check-circle-outline" size={32} color="#10B981" />
+            </View>
+            <Dialog.Title style={[styles.dialogTitle, { color: theme.colors.onSurface }]}>
+              Approve Member
+            </Dialog.Title>
+          </View>
+          
+          <Dialog.Content style={styles.dialogContent}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+              Are you sure you want to approve{' '}
+              <Text style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+                {member?.full_name}
+              </Text>
+              ?
+            </Text>
+            <Text variant="bodySmall" style={[styles.dialogWarning, { color: '#10B981' }]}>
+              Member status will be updated to approved.
+            </Text>
+          </Dialog.Content>
+          
+          <Dialog.Actions style={styles.dialogActions}>
+            <Button 
+              mode="outlined"
+              onPress={() => setShowApproveDialog(false)} 
+              disabled={actionLoading}
+              style={[styles.dialogButton, { borderColor: theme.colors.outline }]}
+              textColor={theme.colors.onSurface}
+            >
+              Cancel
+            </Button>
+            <Button 
+              mode="contained"
+              onPress={handleApprove} 
+              loading={actionLoading} 
+              disabled={actionLoading}
+              style={[styles.dialogButton, { backgroundColor: '#10B981' }]}
+              textColor="#FFFFFF"
+            >
+              Approve
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -314,6 +403,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
+  },
+  dialog: {
+    borderRadius: 24,
+    marginHorizontal: 24,
+    paddingVertical: 8,
+  },
+  dialogHeader: {
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  dialogIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dialogTitle: {
+    fontWeight: '700',
+    fontSize: 20,
+    textAlign: 'center',
+    paddingHorizontal: 24,
+  },
+  dialogContent: {
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+  },
+  dialogWarning: {
+    textAlign: 'center',
+    marginTop: 12,
+    fontWeight: '500',
+  },
+  dialogActions: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    paddingTop: 16,
+    gap: 12,
+  },
+  dialogButton: {
+    borderRadius: 12,
+    flex: 1,
+  },
+  deleteButton: {
+    borderRadius: 12,
   },
   tabletContent: {
     padding: 24,

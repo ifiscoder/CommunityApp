@@ -70,9 +70,10 @@ const ProfileScreen = () => {
   );
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: theme.colors.background }]} 
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={isTablet && styles.tabletContent}
+      keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -102,11 +103,12 @@ const ProfileScreen = () => {
             <View style={styles.chipContainer}>
               <Chip
                 icon={profile.is_approved ? 'check-circle' : 'clock-outline'}
+                mode="flat"
                 style={[
                   styles.statusChip,
                   { backgroundColor: profile.is_approved ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)' }
                 ]}
-                textStyle={{ color: profile.is_approved ? '#10B981' : '#FBBF24', textDecorationLine: 'none' }}
+                textStyle={[styles.chipText, { color: profile.is_approved ? '#10B981' : '#FBBF24' }]}
               >
                 {profile.is_approved ? 'Approved' : 'Pending'}
               </Chip>
@@ -114,8 +116,9 @@ const ProfileScreen = () => {
               {profile.is_verified && (
                 <Chip
                   icon="shield-check"
+                  mode="flat"
                   style={[styles.statusChip, { backgroundColor: 'rgba(56, 189, 248, 0.2)' }]}
-                  textStyle={{ color: '#38BDF8', textDecorationLine: 'none' }}
+                  textStyle={[styles.chipText, { color: '#38BDF8' }]}
                 >
                   Verified
                 </Chip>
@@ -228,6 +231,10 @@ const styles = StyleSheet.create({
   statusChip: {
     height: 32,
     borderRadius: 16,
+  },
+  chipText: {
+    textDecorationLine: 'none',
+    fontWeight: '500',
   },
   divider: {
     marginVertical: 24,
